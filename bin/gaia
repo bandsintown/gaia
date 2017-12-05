@@ -40,7 +40,9 @@ test -f "$BASE_DIR/.gaia" && source "$BASE_DIR/.gaia"
 
 # Define valid commands
 # --------------------------------------------------
-declare -A terraform_commands
+declare -A terraform_commands other_commands valid_commands valid_options
+
+# Terraform commands
 terraform_commands[apply]="Builds or changes infrastructure"
 terraform_commands[destroy]="Destroy Terraform-managed infrastructure"
 terraform_commands[fmt]="Rewrites config files to canonical format"
@@ -53,12 +55,19 @@ terraform_commands[taint]="Manually mark a resource for recreation"
 terraform_commands[untaint]="Manually unmark a resource as tainted"
 terraform_commands[validate]="Validates the Terraform files"
 
-declare -A valid_options
+# Other commands
+other_commands[docs]="Generate documentation with terraform-docs"
+other_commands[lint]="Detect errors with TFLint"
+other_commands[help]="Display this help"
+
+# Options
 valid_options["-v, --verbose"]="Display Terraform commands"
 valid_options["-e, --env"]="Specify an environment"
 valid_options["-m, --module"]="Specify the path for a Terraform module"
 valid_options["-r, --resource"]="Resource to taint or untaint"
 valid_options["-x, --dry-run"]="Run a dry-run just displaying Terraform commands"
+
+merge_map valid_commands terraform_commands other_commands
 
 # Parse options
 # --------------------------------------------------
@@ -111,30 +120,8 @@ parse_opts(){
  cmd_opts=$(printf "%s " "${opts[@]}"); export cmd_opts
 }
 
-# Commands
+# Terraform Commands
 # --------------------------------------------------
-help() {
-  echo "Usage: gaia COMMAND OPTIONS" >&2
-  echo
-  echo "A wrapper script for Terraform"
-  echo
-  echo "Terraform Commands:"
-  padding='                '
-  for cmd in "${!terraform_commands[@]}"; do
-    description=${terraform_commands[$cmd]}
-    printf "  %s %s %s\n" "$cmd" "${padding:${#cmd}}" "$description"
-  done | sort -n -k3
-  echo
-  echo "See: https://www.terraform.io/docs/commands/index.html"
-  echo
-  echo "Options:"
-  for cmd in "${!valid_options[@]}"; do
-    description=${valid_options[$cmd]}
-    printf "  %s %s %s\n" "$cmd" "${padding:${#cmd}}" "$description"
-  done | sort -n -k3
-  exit 0
-}
-
 init(){
   run_command="terraform init"
   test "xtrue" = "x${verbose}" && debug "${run_command}"
@@ -222,17 +209,6 @@ graph(){
   test "xtrue" = "x${dry_run}" || eval '${run_command}'
 }
 
-docs(){
-  # Check programs needed to build are installed
-  type terraform-docs >/dev/null 2>&1 || { error "Please install terraform-docs to generate the documentation."; exit 1;}
-  docs_dir="${BASE_DIR}/docs/${module_path}"
-  mkdir -p "${docs_dir}"
-  info "Documenting module '${module_path}'..."
-  run_command="terraform-docs markdown ${module_dir}"
-  test "xtrue" = "x${verbose}" && debug "${run_command}"
-  test "xtrue" = "x${dry_run}" || eval '${run_command}' > "${docs_dir}/variables.md"
-}
-
 fmt(){
   run_command="terraform fmt ${cmd_opts}"
   info "Formatting module '${module_path}'..."
@@ -244,6 +220,57 @@ validate(){
   init
   run_command="terraform validate -check-variables=false"
   info "Validating module '${module_path}'..."
+  test "xtrue" = "x${verbose}" && debug "${run_command}"
+  test "xtrue" = "x${dry_run}" || eval '${run_command}'
+}
+
+# Other Commands
+# --------------------------------------------------
+help() {
+  echo "Usage: gaia COMMAND OPTIONS" >&2
+  echo
+  echo "A wrapper script for Terraform"
+  echo
+  echo "Terraform Commands:"
+  padding='                '
+  for cmd in "${!terraform_commands[@]}"; do
+    description=${terraform_commands[$cmd]}
+    printf "  %s %s %s\n" "$cmd" "${padding:${#cmd}}" "$description"
+  done | sort -n -k3
+  echo
+  echo "See: https://www.terraform.io/docs/commands/index.html"
+  echo
+  echo "Options:"
+  for cmd in "${!valid_options[@]}"; do
+    description=${valid_options[$cmd]}
+    printf "  %s %s %s\n" "$cmd" "${padding:${#cmd}}" "$description"
+  done | sort -n -k3
+  echo
+  echo "Other Commands:"
+  padding='                '
+  for cmd in "${!other_commands[@]}"; do
+    description=${other_commands[$cmd]}
+    printf "  %s %s %s\n" "$cmd" "${padding:${#cmd}}" "$description"
+  done | sort -n -k3
+  exit 0
+}
+
+docs(){
+  # Check programs needed are installed
+  type terraform-docs >/dev/null 2>&1 || { error "Please install terraform-docs to run this command."; exit 1;}
+  docs_dir="${BASE_DIR}/docs/${module_path}"
+  mkdir -p "${docs_dir}"
+  info "Documenting module '${module_path}'..."
+  run_command="terraform-docs markdown ${module_dir}"
+  test "xtrue" = "x${verbose}" && debug "${run_command}"
+  test "xtrue" = "x${dry_run}" || eval '${run_command}' > "${docs_dir}/variables.md"
+}
+
+lint(){
+  # Check programs needed are installed
+  type tflint >/dev/null 2>&1 || { error "Please install TFLint to run this command."; exit 1;}
+  run_command="tflint"
+  info "Linting module '${module_path}'..."
   test "xtrue" = "x${verbose}" && debug "${run_command}"
   test "xtrue" = "x${dry_run}" || eval '${run_command}'
 }
@@ -272,7 +299,7 @@ command=$1
 
 # Check command
 test "$command" = "help" && help
-has_item "$command" "${!terraform_commands[@]}" || help
+has_item "$command" "${!valid_commands[@]}" || help
 
 # TODO check Terraform version >= 0.10.0
 
@@ -296,31 +323,25 @@ tf=$(find "${module_dir}" -maxdepth 1 -name "*.tf" | wc -l | tr -d ' ')
 if [ "${tf}" -eq 0 ]; then error "Unable to find Terraform configuration files at: ${module_dir}"; exit 1; fi
 cd "${module_dir}" || exit 1
 
-# Load .gaia file to execute hooks
-if [ -f "${module_dir}/.gaia" ]; then
-  source "${module_dir}/.gaia"
-fi
-
-# Pre Hook
+### Pre Hook
 pre_hook
 
-# Module environment file
+### Configuration
 vars="${env_vars}"
-if [ -f "${module_dir}/env/${environment}.tfvars" ]; then
-   if [ -f "${module_dir}/env/default.tfvars" ]; then
-       vars="${vars} -var-file=${module_dir}/env/default.tfvars -var-file=${module_dir}/env/${environment}.tfvars"
-   else
-      vars="${vars} -var-file=${module_dir}/env/${environment}.tfvars"
-   fi
-elif [ -f "${module_dir}/env/default.tfvars" ]; then
+
+if [ -f "${module_dir}/env/default.tfvars" ]; then
   vars="${vars} -var-file=${module_dir}/env/default.tfvars"
+fi
+
+if [ -f "${module_dir}/env/${environment}.tfvars" ]; then
+  vars="${vars} -var-file=${module_dir}/env/${environment}.tfvars"
 fi
 
 # Define the command vars at the end to take precedence
 vars="${vars} ${TERRAFORM_VARS} ${cmd_vars}"
 export vars
 
-# Define the workspace
+### Define the workspace
 if [ -n "${environment}" ]; then
    export workspace="${environment}"
 fi
@@ -329,12 +350,12 @@ if [ -n "${environment}" ] && [ -n "${feature}" ]; then
    export workspace="${environment}-${feature}"
 fi
 
-# Run the command
+### Run the command
 eval "${command}"
 
 # Log the result
 test $? -ne 0 -a "x${BUILDKITE}" = "xtrue" && { echo "^^^ +++"; exit 1; }
 unset module_path vars
 
-# Post hooks
+### Post hooks
 post_hook
