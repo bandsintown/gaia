@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+
+if [ "${BASH_VERSINFO[0]}" -lt 4 ]; then
+    echo "Bash 4 or later is required"
+    exit 1
+fi
+
+# Get the version of the system commands
+set +e
+TERRAFORM_COMMAND=$(which terraform)
+set -e
+
+# Logs
+# --------------------------------------------------
+info() {
+  test "x$BUILDKITE" = "xtrue" && printf "%s\n" "--- $*" || printf "\e[1m%s\e[0m\n" "$*"
+}
+
+debug() {
+  printf "➜ %s\n" "$*"
+}
+
+success() {
+  printf "\e[32m✔ %s\n\e[0m" "$*"
+}
+
+warn() {
+  test "x$BUILDKITE" = "xtrue" && echo "^^^ +++"
+  printf "\e[33m✖ %s\n\e[0m" "$*"
+}
+
+error() {
+  test "x$BUILDKITE" = "xtrue" && echo "^^^ +++"
+  printf "\e[1m\e[31m✖ %s\n\e[0m" "$@"
+}
+
+# Utils
+# --------------------------------------------------
+has_item() {
+    local i
+    for i in "${@:2}"; do
+        [[ "$i" == "$1" ]] && return 0
+    done
+    return 1
+}
+
+merge_map() {
+    local -n dest_var=$1
+    shift
+    local -n src_var
+    local key
+    for src_var in "$@"; do
+        for key in "${!src_var[@]}"; do
+
+            dest_var["$key"]="${src_var[$key]}"
+        done
+    done
+    export dest_var
+}
+
+realpath(){
+  f="$1";
+  if [ -d "$f" ]; then
+      base="";
+      dir="$f";
+  else
+      base="/$(basename "$f")";
+      dir=$(dirname "$f");
+  fi;
+  dir=$(cd "$dir" && /bin/pwd);
+  echo "$dir$base"
+}
+
+reverse(){
+  local arr=(${@})
+  for (( idx=${#arr[@]}-1 ; idx>=0 ; idx-- )) ; do
+      echo "${arr[idx]}"
+  done
+}
+
+
+# Runtime in Docker
+# --------------------------------------------------
+function terraform(){
+  if [ "xtrue" != "x${TERRAFORM_IN_DOCKER}" ]; then
+    test -n "${TERRAFORM_COMMAND}" || { error "Please install Terraform."; exit 1;}
+    "${TERRAFORM_COMMAND}" "$@"
+    return $?
+  fi
+
+  local IMAGE="hashicorp/terraform:${TERRAFORM_VERSION:-latest}"
+
+  # Setup volume mounts for config and context
+  test "$(pwd)" != '/' &&  VOLUMES="-v $(pwd):$(pwd)"
+  test -n "$HOME" && VOLUMES="$VOLUMES -v $HOME:$HOME -v $HOME:/root" # mount $HOME in /root to share .ssh and .aws
+
+  # Environment variables
+  test -n "${AWS_ACCESS_KEY_ID}" && DOCKER_ENV="-e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}"
+  test -n "${AWS_SECRET_ACCESS_KEY}" && DOCKER_ENV="${DOCKER_ENV} -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}"
+  test -n "${AWS_DEFAULT_REGION}" && DOCKER_ENV="${DOCKER_ENV} -e AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}"
+  test -n "${TF_PLUGIN_CACHE_DIR}" || TF_PLUGIN_CACHE_DIR="${BASE_DIR}/.terraform.d/plugin-cache"
+  mkdir -p "${TF_PLUGIN_CACHE_DIR}"
+  test -n "${TF_PLUGIN_CACHE_DIR}" && DOCKER_ENV="${DOCKER_ENV} -e TF_PLUGIN_CACHE_DIR=${TF_PLUGIN_CACHE_DIR}"
+
+  # Run terraform
+  # shellcheck disable=SC2086
+  docker run --rm -ti $DOCKER_ENV $VOLUMES -w "$(pwd)" "${IMAGE}" "$@"
+}
