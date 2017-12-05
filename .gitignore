@@ -1,2 +1,8 @@
+# IntelliJ Idea
 .idea
 *.iml
+
+# Terraform
+.terraform/
+.terraform.d/
+terraform.tfstate.backup
