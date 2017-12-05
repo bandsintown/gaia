@@ -11,13 +11,14 @@ EOF
 
 set -e
 
+SHELLCHECK_VERSION=${SHELLCHECK_VERSION:-latest}
 
 # Master banch before Github release
 if [ "$RELEASE_NAME" == "n/a"  -a "$BUILDKITE_BRANCH" == 'master' ]; then
 cat <<EOF
 steps:
   - label: ':hammer: Run shellcheck'
-    command: shellcheck bin/gaia lib/functions
+    command: docker run -v "${PWD}:/mnt" koalaman/shellcheck:${SHELLCHECK_VERSION} bin/gaia lib/functions
   - wait
   - block: ':github: Release'
     prompt: "Fill out the details for release"
@@ -50,5 +51,5 @@ fi
 cat <<EOF
 steps:
   - label: ':hammer: Run shellcheck'
-    command: shellcheck bin/gaia lib/functions
+    command: docker run -v "${PWD}:/mnt" koalaman/shellcheck:${SHELLCHECK_VERSION} bin/gaia lib/functions
 EOF
