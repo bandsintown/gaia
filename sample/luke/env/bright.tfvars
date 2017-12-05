@@ -1,0 +1,1 @@
+quote="No. You’re coming with me. I’ll not leave you here, I’ve got to save you."

@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+# Set variables if not already set
+test -n "${TERRAFORM_VERSION}" || export TERRAFORM_VERSION=latest
+test -n "${TERRAFORM_IN_DOCKER}" || export TERRAFORM_IN_DOCKER=true
+test "${TERRAFORM_IN_DOCKER}" = "false" &&  export TERRAFORM_VERSION=$(terraform -v | head -n 1 | tr -d 'Terraform v')
+test -n "${TF_PLUGIN_CACHE_DIR}" || export TF_PLUGIN_CACHE_DIR="$BASE_DIR/.terraform.d/plugin-cache"
+mkdir -p "${TF_PLUGIN_CACHE_DIR}"
+
+echo "Running Terraform: $TERRAFORM_VERSION (in Docker: $TERRAFORM_IN_DOCKER)"
