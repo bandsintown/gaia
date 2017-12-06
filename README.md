@@ -19,7 +19,7 @@ Then Gaia evolved to add some other features:
 - Hooks
 - Terraform in Docker
 - Terraform Docs
-- Graph dependencies visualization
+- TFLint
 ...
 
 
@@ -102,8 +102,6 @@ post_apply() {
 
 ```
 
-Please take a look at the project [sample](sample).
-
 ### Terraform in Docker
 
 At Bandsintown, we have multiple Terraform repositories and each developers can run Terraform from his laptop. 
@@ -114,8 +112,7 @@ That's why we implemented in Gaia the ability to run Terraform in Docker.
 The version of Terraform can be set in a `.gaia` file at root or module level just exporting the following environment variables:
 
  - `TERRAFORM_IN_DOCKER`: Define if Terraform runs in Docker
- - `TERRAFORM_VERSION`: The Terraform version
-
+ - `TERRAFORM_VERSION`: The Terraform version (default: `latest`)
 
 Gaia is using the [official Terraform Docker image](https://store.docker.com/community/images/hashicorp/terraform) by default, but it's possible to define a custom Docker images setting:
  
@@ -141,3 +138,11 @@ All the code contained in this repository, unless explicitly stated, is
 licensed under ISC license.
 
 A copy of the license can be found inside the [LICENSE](LICENSE) file.
+
+## Resources
+
+Those resources about Terraform defined some best practices we try to follow 
+
+ - [Comprehensive Guide to Terraform](https://blog.gruntwork.io/a-comprehensive-guide-to-terraform-b3d32832baca)
+ - [Terraform testing strategies](https://www.contino.io/insights/top-3-terraform-testing-strategies-for-ultra-reliable-infrastructure-as-code)
+
