@@ -12,15 +12,14 @@ source "${lib_functions}"
 
 RELEASE_NAME=$(buildkite-agent meta-data get release-name)
 RELEASE_BODY=$(buildkite-agent meta-data get release-notes)
-RELEASE_TYPE=$(buildkite-agent meta-data get release-type)
+
 
 test -n "${RELEASE_NAME}" || { error "Please set the variable 'RELEASE_NAME' to release on Github." ; exit 1;}
 test -n "${RELEASE_BODY}" || { error "Please set the variable 'RELEASE_BODY' to release on Github." ; exit 1;}
-test -n "${RELEASE_TYPE}" || { error "Please set the variable 'RELEASE_TYPE' to release on Github." ; exit 1;}
 
 export RELEASE_NAME
 export RELEASE_BODY
-export RELEASE_IS_DRAFT=$(test "draft" = "$RELEASE_TYPE" && echo "true" || echo "false")
-export RELEASE_IS_PRERELEASE=$(test "pre-release" = "$RELEASE_TYPE" && echo "true" || echo "false")
+export RELEASE_IS_DRAFT="false"
+export RELEASE_IS_PRERELEASE="false"
 
 release_github
