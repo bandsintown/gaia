@@ -37,6 +37,7 @@ fi
 BASE_DIR="$PWD"
 ENV_DIR="$BASE_DIR/env"
 test -f "$BASE_DIR/.gaia" && source "$BASE_DIR/.gaia"
+module_path="."
 
 # Define valid commands
 # --------------------------------------------------
@@ -146,15 +147,15 @@ init(){
 plan(){
   init
   info "Planning module '${module_path}'..."
-  run_command="terraform plan ${vars}"
+  run_command="terraform plan ${vars} ${cmd_opts}"
   test "xtrue" = "x${verbose}" && debug "${run_command}"
   test "xtrue" = "x${dry_run}" || eval '${run_command}'
 }
 
 apply(){
   init
-  info "Applying module ${module_path}..."
-  run_command="terraform apply ${vars}"
+  info "Applying module '${module_path}'..."
+  run_command="terraform apply ${vars} ${cmd_opts}"
   test "xtrue" = "x${verbose}" && debug "${run_command} "
   test "xtrue" = "x${dry_run}" || eval '${run_command}'
 }
@@ -162,7 +163,7 @@ apply(){
 refresh(){
   init
   info "Refreshing module '${module_path}'..."
-  run_command="terraform refresh ${vars}"
+  run_command="terraform refresh ${vars} ${cmd_opts}"
   test "xtrue" = "x${verbose}" && debug "${run_command}"
   test "xtrue" = "x${dry_run}" || eval '${run_command}'
 }
@@ -170,7 +171,7 @@ refresh(){
 destroy(){
   init
   info "Destroying module '${module_path}'..."
-  run_command="terraform destroy ${vars}"
+  run_command="terraform destroy ${vars} ${cmd_opts}"
   test "xtrue" = "x${verbose}" && debug "${run_command}"
   test "xtrue" = "x${dry_run}" || eval '${run_command}'
 }
@@ -178,25 +179,25 @@ destroy(){
 output(){
   init
   info "Outputting module '${module_path}'..."
-  run_command="terraform output ${cmd_opts}"
+  run_command="terraform output ${vars} ${cmd_opts}"
   test "xtrue" = "x${verbose}" && debug "${run_command}"
   test "xtrue" = "x${dry_run}" || eval '${run_command}'
 }
 
 taint(){
-  init
   test -z "${resource}" && { error "Please specify resource to taint."; exit 1;}
+  init
   info "Tainting resource '${resource}'..."
-  run_command="terraform taint ${resource}"
+  run_command="terraform taint ${resource} ${cmd_opts}"
   test "xtrue" = "x${verbose}" && debug "${run_command}"
   test "xtrue" = "x${dry_run}" || eval '${run_command}'
 }
 
 untaint(){
-  init
   test -z "${resource}" && { error "Please specify resource to untaint."; exit 1;}
+  init
   info "Untainting resource '${resource}'..."
-  run_command="terraform untaint ${resource}"
+  run_command="terraform untaint ${resource} ${cmd_opts}"
   test "xtrue" = "x${verbose}" && debug "${run_command}"
   test "xtrue" = "x${dry_run}" || eval '${run_command}'
 }
@@ -204,13 +205,13 @@ untaint(){
 graph(){
   init
   info "Generating graph for module '${module_path}'..."
-  run_command="terraform graph -draw-cycles -module-depth=1 ${module_dir}"
+  run_command="terraform graph ${module_dir} ${cmd_opts}"
   test "xtrue" = "x${verbose}" && debug "${run_command}"
   test "xtrue" = "x${dry_run}" || eval '${run_command}'
 }
 
 fmt(){
-  run_command="terraform fmt ${cmd_opts}"
+  run_command="terraform fmt ${vars} ${cmd_opts}"
   info "Formatting module '${module_path}'..."
   test "xtrue" = "x${verbose}" && debug "${run_command}"
   test "xtrue" = "x${dry_run}" || eval '${run_command}'
@@ -218,7 +219,7 @@ fmt(){
 
 validate(){
   init
-  run_command="terraform validate -check-variables=false"
+  run_command="terraform validate ${cmd_opts} -check-variables=false"
   info "Validating module '${module_path}'..."
   test "xtrue" = "x${verbose}" && debug "${run_command}"
   test "xtrue" = "x${dry_run}" || eval '${run_command}'
@@ -238,6 +239,7 @@ help() {
     printf "  %s %s %s\n" "$cmd" "${padding:${#cmd}}" "$description"
   done | sort -n -k3
   echo
+  echo "The Terraform options for these commands might be passed"
   echo "See: https://www.terraform.io/docs/commands/index.html"
   echo
   echo "Options:"
