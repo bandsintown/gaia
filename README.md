@@ -119,7 +119,7 @@ The version of Terraform can be set in a `.gaia` file at root or module level ju
  - `TERRAFORM_IN_DOCKER`: Define if Terraform runs in Docker
  - `TERRAFORM_VERSION`: The Terraform version (default: `latest`)
 
-Gaia is using the [official Terraform Docker image](https://store.docker.com/community/images/hashicorp/terraform) by default, but it's possible to define a custom Docker images setting:
+Gaia is using the [official Terraform Docker image](https://store.docker.com/community/images/hashicorp/terraform) by default, but it's possible to define a custom Docker image setting:
  
  - `TERRAFORM_DOCKER_IMAGE`: The Docker image used to run Terraform. (default: `hashicorp/terraform`)
 
@@ -136,6 +136,16 @@ Note: Terraform Docs has to be installed (does not run yet in Docker)
 [TFLint](https://github.com/wata727/tflint) is another tool for detecting errors that can not be detected by `terraform plan`.
 
 We integrated in Gaia TFLint in order to detect errors in our CI.
+
+In order to run TFLint in Docker, you have to defined the following variables:
+
+ - `TFLINT_IN_DOCKER`: Define if TFLint runs in Docker
+ - `TFLINT_VERSION`: The TFLint version (default: `latest`)
+
+Gaia is using the [official TFLint Docker image](https://hub.docker.com/r/wata727/tflint) by default, but it's possible to define a custom Docker image setting:
+ 
+ - `TFLINT_DOCKER_IMAGE`: The Docker image used to run TFLint. (default: `wata727/tflint`)
+
 
 ## License
 
