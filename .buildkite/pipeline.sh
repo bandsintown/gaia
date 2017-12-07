@@ -29,7 +29,7 @@ steps:
         hint: "$release_hint"
       - text: "Describe this release"
         key: "release-notes"
-        required: false
+        required: true
         hint: "List of what's changed in this release"
   - command: .buildkite/pipeline.sh | buildkite-agent pipeline upload
     label: ":pipeline: Setup pipeline"
