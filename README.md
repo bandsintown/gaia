@@ -66,20 +66,25 @@ At Bandsintown we've found this project format to be very successful and use it 
 
 Gaia offers a flexible way to define configuration for an environment.
 
-The configuration can be set at different levels with the following precedence: 
+The configuration can be set at different levels: 
+ 
+1. **Command Line**:  Configuration might be passed through command line setting the Terraform variables with `-var`. 
+The *command line* configuration has the higher precedence.
 
-1. Configuration might be passed through command line setting the Terraform variables with `-var`. The command line has the higher precedence to define the configuration.
-2. The environment variable `TERRAFORM_VARS` might be set to define configuration.
-3. Configuration per module: The configuration might be defined or overrode at the module level specifying a `.tfvars` file based on the name of the environment. (e.g `dev.tfvars` for `dev` environment) 
-4. Configuration per project: The configuration might be defined or overrode at the module level specifying a `.tfvars` file based on the name of the environment. (e.g `dev.tfvars` for `dev` environment). 
-When the `-env` option is passed, Gaia is looking for file in this directory.
+2. **Environment variable**: The environment variable `TERRAFORM_VARS` might be set to define configuration (e.g `TERRAFORM_VARS="-var service=search-api"`)
+
+3. **Module Configuration**: The configuration might be defined or overrode at the module level specifying a `.tfvars` file based on the name of the environment. (e.g `dev.tfvars` for `dev` environment). The configuration for the module should be defined here. 
+
+4. **Global Configuration**: The configuration might be defined specifying a `.tfvars` file based on the name of the environment. (e.g `dev.tfvars` for `dev` environment). The global configuration should be defined here.
+The *global configuration* has the lower precedence.
+
 
 ### Gaia configuration
 
 Gaia itself can be configure to initialize the environment (hooks, runtime...). 
 
 Each module can contains a `.gaia` file defining configuration for this module. 
-A `.gaia` file is just a `bash` script defining logic to intialize Gaia to perform actions.
+A `.gaia` file is just a `bash` script defining logic to initialize Gaia to perform actions.
 
 ### Hooks
 
