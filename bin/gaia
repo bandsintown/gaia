@@ -70,7 +70,8 @@ valid_options["-v, --verbose"]="Display Terraform commands"
 valid_options["-e, --env"]="Specify an environment"
 valid_options["-m, --module"]="Specify the path for a Terraform module"
 valid_options["-r, --resource"]="Resource to taint or untaint"
-valid_options["-x, --dry-run"]="Run a dry-run just displaying Terraform commands"
+valid_options["-s, --show-commands"]="Show the Terraform commands but not run them"
+valid_options["-x, --dry-run"]="Run a dry-run when running run command (validate, lint, plan)"
 
 merge_map valid_commands terraform_commands other_commands
 
@@ -98,8 +99,10 @@ parse_opts(){
         v|verbose|-verbose)
             export verbose="true";;
         x|dry-run|-dry-run)
-            export verbose="true"
             export dry_run="true";;
+        s|show-commands|-show-commands)
+            export verbose="true"
+            export show_commands="true";;
         r|resource|-resource)
             shift
             export resource="$1";;
@@ -130,7 +133,7 @@ parse_opts(){
 init(){
   run_command="terraform init"
   test "xtrue" = "x${verbose}" && debug "${run_command}"
-  test "xtrue" = "x${dry_run}" || ${run_command}
+  test "xtrue" = "x${show_commands}" || ${run_command}
 
   test -n "${workspace}" || workspace="default"
   local exists
@@ -139,12 +142,12 @@ init(){
     info "Selecting workspace '${workspace}'..."
     run_command="terraform workspace select ${workspace}"
     test "xtrue" = "x${verbose}" && debug "${run_command}"
-    test "xtrue" = "x${dry_run}" || eval '${run_command}'
+    test "xtrue" = "x${show_commands}" || eval '${run_command}'
   else
     info "Creating workspace '${workspace}'..."
     run_command="terraform workspace new ${workspace}"
     test "xtrue" = "x${verbose}" && debug "${run_command}"
-    test "xtrue" = "x${dry_run}" || eval '${run_command}'
+    test "xtrue" = "x${show_commands}" || eval '${run_command}'
   fi
 }
 
@@ -152,35 +155,37 @@ plan(){
   info "Planning module '${module_path}'..."
   run_command="terraform plan ${vars} ${cmd_opts}"
   test "xtrue" = "x${verbose}" && debug "${run_command}"
-  test "xtrue" = "x${dry_run}" || eval '${run_command}'
+  test "xtrue" = "x${show_commands}" || eval '${run_command}'
 }
 
 apply(){
-  info "Applying module '${module_path}'..."
-  run_command="terraform apply ${vars} ${cmd_opts}"
-  test "xtrue" = "x${verbose}" && debug "${run_command} "
-  test "xtrue" = "x${dry_run}" || eval '${run_command}'
+  if [  "xtrue" != "x${dry_run}" ]; then
+    info "Applying module '${module_path}'..."
+    run_command="terraform apply ${vars} ${cmd_opts}"
+    test "xtrue" = "x${verbose}" && debug "${run_command} "
+    test "xtrue" = "x${show_commands}" || eval '${run_command}'
+  fi
 }
 
 refresh(){
   info "Refreshing module '${module_path}'..."
   run_command="terraform refresh ${vars} ${cmd_opts}"
   test "xtrue" = "x${verbose}" && debug "${run_command}"
-  test "xtrue" = "x${dry_run}" || eval '${run_command}'
+  test "xtrue" = "x${show_commands}" || eval '${run_command}'
 }
 
 destroy(){
   info "Destroying module '${module_path}'..."
   run_command="terraform destroy ${vars} ${cmd_opts}"
   test "xtrue" = "x${verbose}" && debug "${run_command}"
-  test "xtrue" = "x${dry_run}" || eval '${run_command}'
+  test "xtrue" = "x${show_commands}" || eval '${run_command}'
 }
 
 output(){
   info "Outputting module '${module_path}'..."
   run_command="terraform output ${vars} ${cmd_opts}"
   test "xtrue" = "x${verbose}" && debug "${run_command}"
-  test "xtrue" = "x${dry_run}" || eval '${run_command}'
+  test "xtrue" = "x${show_commands}" || eval '${run_command}'
 }
 
 taint(){
@@ -188,7 +193,7 @@ taint(){
   info "Tainting resource '${resource}'..."
   run_command="terraform taint ${resource} ${cmd_opts}"
   test "xtrue" = "x${verbose}" && debug "${run_command}"
-  test "xtrue" = "x${dry_run}" || eval '${run_command}'
+  test "xtrue" = "x${show_commands}" || eval '${run_command}'
 }
 
 untaint(){
@@ -196,35 +201,35 @@ untaint(){
   info "Untainting resource '${resource}'..."
   run_command="terraform untaint ${resource} ${cmd_opts}"
   test "xtrue" = "x${verbose}" && debug "${run_command}"
-  test "xtrue" = "x${dry_run}" || eval '${run_command}'
+  test "xtrue" = "x${show_commands}" || eval '${run_command}'
 }
 
 graph(){
   info "Generating graph for module '${module_path}'..."
   run_command="terraform graph ${module_dir} ${cmd_opts}"
   test "xtrue" = "x${verbose}" && debug "${run_command}"
-  test "xtrue" = "x${dry_run}" || eval '${run_command}'
+  test "xtrue" = "x${show_commands}" || eval '${run_command}'
 }
 
 fmt(){
   run_command="terraform fmt ${vars} ${cmd_opts}"
   info "Formatting module '${module_path}'..."
   test "xtrue" = "x${verbose}" && debug "${run_command}"
-  test "xtrue" = "x${dry_run}" || eval '${run_command}'
+  test "xtrue" = "x${show_commands}" || eval '${run_command}'
 }
 
 validate(){
   run_command="terraform validate ${cmd_opts} -check-variables=false"
   info "Validating module '${module_path}'..."
   test "xtrue" = "x${verbose}" && debug "${run_command}"
-  test "xtrue" = "x${dry_run}" || eval '${run_command}'
+  test "xtrue" = "x${show_commands}" || eval '${run_command}'
 }
 
 run(){
-  validate
-  lint
-  plan
-  apply
+    validate
+    lint
+    plan
+    apply
 }
 
 # Other Commands
@@ -267,7 +272,7 @@ docs(){
   info "Documenting module '${module_path}'..."
   run_command="terraform-docs markdown ${module_dir}"
   test "xtrue" = "x${verbose}" && debug "${run_command}"
-  test "xtrue" = "x${dry_run}" || eval '${run_command}' > "${docs_dir}/variables.md"
+  test "xtrue" = "x${show_commands}" || eval '${run_command}' > "${docs_dir}/variables.md"
 }
 
 lint(){
@@ -276,7 +281,7 @@ lint(){
   run_command="tflint"
   info "Linting module '${module_path}'..."
   test "xtrue" = "x${verbose}" && debug "${run_command}"
-  test "xtrue" = "x${dry_run}" || eval '${run_command}'
+  test "xtrue" = "x${show_commands}" || eval '${run_command}'
 }
 
 # Hooks
