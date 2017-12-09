@@ -105,7 +105,7 @@ terraform(){
 
   # Run terraform
   # shellcheck disable=SC2086
-  docker run --net=host --rm -i $DOCKER_ENV $VOLUMES -w "$(pwd)" "${IMAGE}" "$@"
+  docker run --net=host --rm -ti $DOCKER_ENV $VOLUMES -w "$(pwd)" "${IMAGE}" "$@"
 }
 
 tflint(){
@@ -133,5 +133,5 @@ tflint(){
 
   # Run terraform
   # shellcheck disable=SC2086
-  docker run --net=host --rm -i $DOCKER_ENV $VOLUMES -w "$(pwd)" "${IMAGE}" "$@"
+  docker run --net=host --rm -ti $DOCKER_ENV $VOLUMES -w "$(pwd)" "${IMAGE}" "$@"
 }
