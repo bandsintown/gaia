@@ -43,6 +43,9 @@ cat <<EOF
 steps:
   - label: ':github: Release'
     command: .buildkite/release.sh
+  - wait
+  - label: ':beer: Update Homebrew formula'
+    command: .buildkite/homebrew.sh
 EOF
 exit 0
 fi
