@@ -315,7 +315,7 @@ parse_opts "$@"
 
 # Show must go on
 module_dir=$(realpath "$BASE_DIR/$module_path")
-rm -fr ${module_dir}/.terraform  # Force to download remote state
+rm -fr "${module_dir}/.terraform"  # Force to download remote state
 test -d "${module_dir}" || { error "Unable to resolve path: ${module_dir}"; exit 1;}
 tf=$(find "${module_dir}" -maxdepth 1 -name "*.tf" | wc -l | tr -d ' ')
 if [ "${tf}" -eq 0 ]; then error "Unable to find Terraform configuration files at: ${module_dir}"; exit 1; fi
