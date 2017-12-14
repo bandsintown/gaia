@@ -46,6 +46,8 @@ steps:
   - wait
   - label: ':beer: Update Homebrew formula'
     command: .buildkite/homebrew.sh
+  - label: ':buildkite: Install on Buildkite server'
+    command: .buildkite/install.sh
 EOF
 exit 0
 fi
