@@ -19,8 +19,10 @@ curl_options="-Ls --connect-timeout 10 --max-time 10 --retry 5 --retry-delay 5 -
 cd "$install_dir"
 
 info "Installing Gaia on Buildkite server..."
-mkdir -p "gaia-${version}"
-response=$(curl -Ls "${url}" | tar xz)
+
+version=$(echo ${version} | tr -d 'v' )
+mkdir -p "/opt/gaia-${version}"
+response=$(curl -Ls "${url}" | tar xz && ln -sf "/opt/gaia-${version}" /opt/gaia)
 
 if [ $? -ne 0 ]; then
   error "Error installing Gaia on Buildkite server:"
