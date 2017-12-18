@@ -3,6 +3,8 @@
 What is Gaia ?
 ====
 
+![Gaia](logo.png)
+
 In Greek mythology, Gaia is the personification of the Earth and one of the Greek primordial deities. Gaia is the ancestral mother of all life: the primal Mother Earth goddess.
 
 More seriously, Gaia is just a wrapper script for [Terraform](https://www.terraform.io/). Terraform is a fantastic tool to bring infrastructure as code, but running Terraform in automation 
