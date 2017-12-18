@@ -22,7 +22,7 @@ info "Installing Gaia on Buildkite server..."
 
 version=$(echo ${version} | tr -d 'v' )
 mkdir -p "/opt/gaia-${version}"
-response=$(curl -Ls "${url}" | tar xz && ln -sf "/opt/gaia-${version}" /opt/gaia)
+response=$(curl -Ls "${url}" | tar xz && rm -f /opt/gaia && ln -sf "/opt/gaia-${version}" /opt/gaia)
 
 if [ $? -ne 0 ]; then
   error "Error installing Gaia on Buildkite server:"
