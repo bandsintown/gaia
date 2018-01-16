@@ -319,6 +319,7 @@ test -d "${module_dir}" || { error "Unable to resolve path: ${module_dir}"; exit
 tf=$(find "${module_dir}" -maxdepth 1 -name "*.tf" | wc -l | tr -d ' ')
 if [ "${tf}" -eq 0 ]; then error "Unable to find Terraform configuration files at: ${module_dir}"; exit 1; fi
 cd "${module_dir}" || exit 1
+test -f "${module_dir}/.gaia" && source "${module_dir}/.gaia"
 
 ### Configuration
 if [ -n "${environment}" ]; then
