@@ -9,6 +9,8 @@ fi
 set +e
 TERRAFORM_COMMAND=$(which terraform)
 TFLINT_COMMAND=$(which tflint)
+verbose=false
+show_commands=false
 set -e
 
 # Logs
@@ -108,7 +110,9 @@ terraform(){
 
   # Run terraform
   # shellcheck disable=SC2086
-  docker run --net=host --rm -ti $DOCKER_ENV $VOLUMES -w "$(pwd)" "${IMAGE}" "$@"
+  run_command="docker run -u ${UID}:root --net=host --rm -ti ${DOCKER_ENV} ${VOLUMES} -w $(pwd) ${IMAGE} $*"
+  test "xtrue" = "x${verbose}" && debug "${run_command} "
+  test "xtrue" = "x${show_commands}" || eval "${run_command}"
 }
 
 tflint(){
@@ -136,5 +140,7 @@ tflint(){
 
   # Run terraform
   # shellcheck disable=SC2086
-  docker run --net=host --rm -ti $DOCKER_ENV $VOLUMES -w "$(pwd)" "${IMAGE}" "$@"
+  run_command="docker run --net=host --rm -ti ${DOCKER_ENV} ${VOLUMES} -w $(pwd) ${IMAGE} $*"
+  test "xtrue" = "x${verbose}" && debug "${run_command} "
+  test "xtrue" = "x${show_commands}" || eval "${run_command}"
 }
