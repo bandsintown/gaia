@@ -90,8 +90,10 @@ terraform(){
     return $?
   fi
 
-
   local IMAGE="${TERRAFORM_DOCKER_IMAGE:-hashicorp/terraform}:${TERRAFORM_VERSION:-latest}"
+
+  # Define user mapping on Linux. Does not work on Mac
+  test "$(uname -s)" = "Linux" && DOCKER_ENV="${DOCKER_ENV} -u ${UID}:root"
 
   # Setup volume mounts for config and context
   test "$(pwd)" != '/' &&  VOLUMES="-v $(pwd):$(pwd)"
