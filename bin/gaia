@@ -38,9 +38,6 @@ ENV_DIR="$BASE_DIR/env"
 test -f "$BASE_DIR/.gaia" && source "$BASE_DIR/.gaia"
 module_path="."
 
-# TODO Check Terraform version >= 0.10.0
-# --------------------------------------------------
-
 # Define valid commands
 # --------------------------------------------------
 declare -A terraform_commands other_commands valid_commands valid_options
@@ -132,7 +129,7 @@ parse_opts(){
 init(){
   run_command="terraform init"
   test "xtrue" = "x${verbose}" && debug "${run_command}"
-  test "xtrue" = "x${show_commands}" || ${run_command}
+  test "xtrue" = "x${show_commands}" || eval "${run_command}"
 
   test -n "${workspace}" || workspace="default"
   local exists
@@ -320,6 +317,18 @@ tf=$(find "${module_dir}" -maxdepth 1 -name "*.tf" | wc -l | tr -d ' ')
 if [ "${tf}" -eq 0 ]; then error "Unable to find Terraform configuration files at: ${module_dir}"; exit 1; fi
 cd "${module_dir}" || exit 1
 test -f "${module_dir}/.gaia" && source "${module_dir}/.gaia"
+
+# Check Terraform version >= 0.10.0
+# --------------------------------------------------
+# Find Terraform version
+tf_version="$(terraform version | tr -d '\r' | head -n 1 | sed 's/Terraform v//')"
+
+if [ "$( echo "${tf_version}" | awk -F'.' '( $1 >= 0 && $2 >= 10 )')" ]; then
+   info "Using: Terraform ${tf_version} (in Docker: ${TERRAFORM_IN_DOCKER:-false})"
+else
+   error "This version of Gaia is only compatible with Terraform version >= 0.10.0."
+   exit 1
+fi
 
 ### Configuration
 if [ -n "${environment}" ]; then
