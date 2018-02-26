@@ -54,6 +54,7 @@ terraform_commands[refresh]="Update local state file against real resources"
 terraform_commands[taint]="Manually mark a resource for recreation"
 terraform_commands[untaint]="Manually unmark a resource as tainted"
 terraform_commands[validate]="Validates the Terraform files"
+terraform_commands[force-unlock]="Manually unlock the state for the defined configuration"
 
 # Other commands
 other_commands[docs]="Generate documentation with terraform-docs"
@@ -65,7 +66,6 @@ other_commands[help]="Display this help"
 valid_options["-v, --verbose"]="Display Terraform commands"
 valid_options["-e, --env"]="Specify an environment"
 valid_options["-m, --module"]="Specify the path for a Terraform module"
-valid_options["-r, --resource"]="Resource to taint or untaint"
 valid_options["-s, --show-commands"]="Show the Terraform commands but not run them"
 valid_options["-x, --dry-run"]="Run a dry-run when running run command (validate, lint, plan)"
 
@@ -74,6 +74,7 @@ merge_map valid_commands terraform_commands other_commands
 # Parse options
 # --------------------------------------------------
 parse_opts(){
+  shift # skip the command
   declare -a opts
   until [ "$1" = "" ] ; do
     local first_char="${1:0:1}"
@@ -99,9 +100,6 @@ parse_opts(){
         s|show-commands|-show-commands)
             export verbose="true"
             export show_commands="true";;
-        r|resource|-resource)
-            shift
-            export resource="$1";;
         h|help|-help) help;;
         # Terraform vars
         var)
@@ -117,11 +115,15 @@ parse_opts(){
             opts+=($1)
             ;;
       esac
+    else
+      # All arguments
+      args+=($1)
     fi
     shift
  done
- cmd_vars=$(printf "%s " "${tf_vars[@]}"); export cmd_vars
- cmd_opts=$(printf "%s " "${opts[@]}"); export cmd_opts
+ cmd_vars="${tf_vars[*]}"; export cmd_vars
+ cmd_opts="${opts[*]}"; export cmd_opts
+ cmd_args="${args[*]}"; export cmd_args
 }
 
 # Terraform Commands
@@ -185,17 +187,15 @@ output(){
 }
 
 taint(){
-  test -z "${resource}" && { error "Please specify resource to taint."; exit 1;}
-  info "Tainting resource '${resource}'..."
-  run_command="terraform taint ${resource} ${cmd_opts}"
+  info "Tainting resource '${cmd_args}' for module '${module_path}'..."
+  run_command="terraform taint ${cmd_opts} ${cmd_args}"
   test "xtrue" = "x${verbose}" && debug "${run_command}"
   test "xtrue" = "x${show_commands}" || eval "${run_command}"
 }
 
 untaint(){
-  test -z "${resource}" && { error "Please specify resource to untaint."; exit 1;}
-  info "Untainting resource '${resource}'..."
-  run_command="terraform untaint ${resource} ${cmd_opts}"
+  info "Untainting resource '${cmd_args}' for module '${module_path}'..."
+  run_command="terraform untaint ${cmd_opts} ${cmd_args}"
   test "xtrue" = "x${verbose}" && debug "${run_command}"
   test "xtrue" = "x${show_commands}" || eval "${run_command}"
 }
@@ -217,6 +217,13 @@ fmt(){
 validate(){
   run_command="terraform validate ${cmd_opts} -check-variables=false"
   info "Validating module '${module_path}'..."
+  test "xtrue" = "x${verbose}" && debug "${run_command}"
+  test "xtrue" = "x${show_commands}" || eval "${run_command}"
+}
+
+force-unlock(){
+  run_command="terraform force-unlock ${cmd_args}"
+  info "Force unlock '${cmd_args}' for module '${module_path}'... "
   test "xtrue" = "x${verbose}" && debug "${run_command}"
   test "xtrue" = "x${show_commands}" || eval "${run_command}"
 }
