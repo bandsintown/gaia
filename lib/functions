@@ -9,8 +9,6 @@ fi
 set +e
 TERRAFORM_COMMAND=$(which terraform)
 TFLINT_COMMAND=$(which tflint)
-verbose=false
-show_commands=false
 set -e
 
 # Logs
@@ -85,7 +83,7 @@ reverse(){
 # --------------------------------------------------
 terraform(){
   if [ "xtrue" != "x${TERRAFORM_IN_DOCKER}" ]; then
-    test -n "${TERRAFORM_COMMAND}" || { error "Please install Terraform."; exit 1;}
+    test -n "${TERRAFORM_COMMAND}" || { error "Please install Terraform (>=0.10.0)."; exit 1;}
     "${TERRAFORM_COMMAND}" "$@"
     return $?
   fi
@@ -113,16 +111,10 @@ terraform(){
   # Run terraform
   # shellcheck disable=SC2086
   run_command="docker run --net=host --rm -ti ${DOCKER_ENV} ${VOLUMES} -w $(pwd) ${IMAGE} $*"
-  test "xtrue" = "x${verbose}" && debug "${run_command} "
-  test "xtrue" = "x${show_commands}" || eval "${run_command}"
+  eval "${run_command}"
 }
 
 tflint(){
-  # Get the version of the system commands
-  set +e
-  TFLINT_COMMAND=$(which tflint)
-  set -e
-
   if [ "xtrue" != "x${TFLINT_IN_DOCKER}" ]; then
     test -n "${TFLINT_COMMAND}" || { error "Please install TFLint."; exit 1;}
     "${TFLINT_COMMAND}" "$@"
@@ -143,6 +135,5 @@ tflint(){
   # Run terraform
   # shellcheck disable=SC2086
   run_command="docker run --net=host --rm -ti ${DOCKER_ENV} ${VOLUMES} -w $(pwd) ${IMAGE} $*"
-  test "xtrue" = "x${verbose}" && debug "${run_command} "
-  test "xtrue" = "x${show_commands}" || eval "${run_command}"
+  eval "${run_command}"
 }
