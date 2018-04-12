@@ -135,7 +135,7 @@ init(){
 
   test -n "${workspace}" || workspace="default"
   local exists
-  exists=$(terraform workspace list | grep "${workspace}" > /dev/null 2>&1; echo $?)
+  exists=$(terraform workspace list | grep -E "(^|\s+)${workspace}$" > /dev/null 2>&1; echo $?)
   if [ "${exists}" = "0" ]; then
     info "Selecting workspace '${workspace}'..."
     run_command="terraform workspace select ${workspace}"
