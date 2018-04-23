@@ -193,6 +193,13 @@ taint(){
   test "xtrue" = "x${show_commands}" || eval "${run_command}"
 }
 
+import(){
+  info "Importing resource '${cmd_args}' for module '${module_path}'..."
+  run_command="terraform import ${cmd_opts} ${cmd_args}"
+  test "xtrue" = "x${verbose}" && debug "${run_command}"
+  test "xtrue" = "x${show_commands}" || eval "${run_command}"
+}
+
 untaint(){
   info "Untainting resource '${cmd_args}' for module '${module_path}'..."
   run_command="terraform untaint ${cmd_opts} ${cmd_args}"
