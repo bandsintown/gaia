@@ -55,6 +55,7 @@ terraform_commands[taint]="Manually mark a resource for recreation"
 terraform_commands[untaint]="Manually unmark a resource as tainted"
 terraform_commands[validate]="Validates the Terraform files"
 terraform_commands[force-unlock]="Manually unlock the state for the defined configuration"
+terraform_commands[state]="Manually update state file"
 
 # Other commands
 other_commands[docs]="Generate documentation with terraform-docs"
@@ -231,6 +232,13 @@ validate(){
 force-unlock(){
   run_command="terraform force-unlock ${cmd_args}"
   info "Force unlock '${cmd_args}' for module '${module_path}'... "
+  test "xtrue" = "x${verbose}" && debug "${run_command}"
+  test "xtrue" = "x${show_commands}" || eval "${run_command}"
+}
+
+state(){
+  run_command="terraform state ${cmd_args}"
+  info "state '${cmd_args}' for module '${module_path}'... "
   test "xtrue" = "x${verbose}" && debug "${run_command}"
   test "xtrue" = "x${show_commands}" || eval "${run_command}"
 }
