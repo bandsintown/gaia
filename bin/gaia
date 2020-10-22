@@ -160,7 +160,7 @@ plan(){
 apply(){
   if [  "xtrue" != "x${dry_run}" ]; then
     info "Applying module '${module_path}'..."
-    run_command="terraform apply ${vars} ${cmd_opts}"
+    run_command="terraform apply -auto-approve=true ${vars} ${cmd_opts}"
     test "xtrue" = "x${verbose}" && debug "${run_command} "
     test "xtrue" = "x${show_commands}" || eval "${run_command}"
   fi
