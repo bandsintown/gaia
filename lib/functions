@@ -110,7 +110,7 @@ terraform(){
 
   # Run terraform
   # shellcheck disable=SC2086
-  run_command="docker run --net=host --rm -ti ${DOCKER_ENV} ${VOLUMES} -w $(pwd) ${IMAGE} $*"
+  run_command="docker run --userns=host --rm -ti ${DOCKER_ENV} ${VOLUMES} -w $(pwd) ${IMAGE} $*"
   eval "${run_command}"
 }
 
@@ -121,7 +121,7 @@ tflint(){
     return $?
   fi
 
-  local IMAGE="${TFLINT_DOCKER_IMAGE:-wata727/tflint}:${TFLINT_VERSION:-latest}"
+  local IMAGE="${TFLINT_DOCKER_IMAGE:-wata727/tflint}:${TFLINT_VERSION:-"0.14.0"}"
 
   # Setup volume mounts for config and context
   test "$(pwd)" != '/' &&  VOLUMES="-v $(pwd):$(pwd)"
@@ -134,6 +134,6 @@ tflint(){
 
   # Run terraform
   # shellcheck disable=SC2086
-  run_command="docker run --net=host --rm -ti ${DOCKER_ENV} ${VOLUMES} -w $(pwd) ${IMAGE} $*"
+  run_command="docker run --userns=host --rm -ti ${DOCKER_ENV} ${VOLUMES} -w $(pwd) ${IMAGE} $*"
   eval "${run_command}"
 }
