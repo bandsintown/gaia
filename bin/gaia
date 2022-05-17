@@ -223,7 +223,13 @@ fmt(){
 }
 
 validate(){
-  run_command="terraform validate ${cmd_opts} -check-variables=false"
+  if [ "$( echo "${tf_version}" | awk -F'.' '( $1 >= 0 && $2 >= 12 )')" ]; then
+    info "Using: Terraform ${tf_version}'s validate command (terraform validate ${cmd_opts})"
+    run_command="terraform validate ${cmd_opts}"
+  else
+    info "Using: Terraform ${tf_version}'s validate command (terraform validate ${cmd_opts}-check-variables=false)"
+    run_command="terraform validate ${cmd_opts} -check-variables=false"
+  fi
   info "Validating module '${module_path}'..."
   test "xtrue" = "x${verbose}" && debug "${run_command}"
   test "xtrue" = "x${show_commands}" || eval "${run_command}"
